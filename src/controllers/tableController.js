@@ -1,21 +1,24 @@
-const connection = require('../database/connection');
+const mesaModel = require('../models/mesaModel');
 
 module.exports = {
-    async index(request, response){
-        const tables = await connection('table').select('*');
+  getMesas(req, res){
+    mesaModel.getAllMesas((err, mesas) => {
+      if(err){
+        res.send(err);
+      } else {
+        res.send(mesas);
+      }
+    })
+  },
 
-        return response.json(tables);
-    },
+  getMesaById(req, res){
+    mesaModel.getMesaById(req.params.id, (err, mesa) => {
+      if(err){
+        res.send(err);
+      } else {
+        res.send(mesa);
+      }
+    })
+  },
 
-    async create(request, response) {
-        const {number, status} = request.body;
-
-        const [id] = await connection('table').insert({
-            number, 
-            status
-        });
-
-        return response.json({ id });
-    }
-
-};
+}

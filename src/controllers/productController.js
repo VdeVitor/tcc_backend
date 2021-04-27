@@ -1,27 +1,37 @@
-const connection = require('../database/connection');
-const crypto = require('crypto');
+const produtoModel = require('../models/produtoModel');
 
 module.exports = {
-    async index(request, response){
-        const { page = 1 } = request.query;
-        const [count] = await connection('product').count();
-        
-        const products = await connection('product').limit(10).offset((page - 1) * 10).select('*')
-
-
-        return response.json(products);
+    getProd(req,res){
+      produtoModel.getAllProdutos((err, produtos) => {
+            if(err){
+                res.send(err);
+            } else {
+                res.send(produtos);
+            }
+        })
     },
 
-    async create(request, response){
-    const { name, description, value } = request.body;
+    getProdById(req, res){
+      produtoModel.getProdById(req.params.id, (err, produto) => {
+            if(err){
+                res.send(err);
+            } else {
+                res.send(produto);
+            }
+        })
+    },
 
-    await connection('product').insert({
-        id,
-        name,
-        description,
-        value,
-    })
-    
-    return response.json('Produto inserido com id: '+id);
+    createProd(req, res) {
+        const produtoReqData = new produtoModel(req.body);
+
+        if(req.body.constructor === Object && Object(req.body).length === 0) {
+            res.send(400).send({success: false, message: 'Favor preencher todos os campos!'});
+        } else {
+            produtoModel.createProd(produtoReqData, (err, produto) => {
+                if(err)
+                    res.send(err);
+                    res.json({status: true, message: 'Produto criado com sucesso!', data: produto.insertId})
+            })
+        }
     }
-};
+}
