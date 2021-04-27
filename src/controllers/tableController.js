@@ -21,4 +21,8 @@ module.exports = {
     })
   },
 
+  criaMesa(req, res){
+    console.log('cria mesa!');
+  },
+
 }

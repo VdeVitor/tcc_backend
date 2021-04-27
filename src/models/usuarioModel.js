@@ -22,7 +22,7 @@ usuario.getAllUsuarios = (resultado) => {
 
 //get usuario by id
 usuario.getUsuarioById = (id, resultado) => {
-  dbConn.query('SELECT * FROM usuarios WHERE idusuarios=?', id, (err, res) => {
+  dbConn.query('SELECT * FROM usuarios WHERE idusuarios = ?', id, (err, res) => {
     if(err) {
       console.log('Erro ao buscar usuário de id: ', err)
       resultado(null, err);
@@ -39,6 +39,31 @@ usuario.createUsuario = (usuarioReqData, resultado) => {
       console.log('Erro ao criar usuário!', err);
       resultado(null, err);
     } else {
+      resultado(null, res);
+    }
+  })
+}
+
+//post altera usuario
+usuario.editUsuario = (id, usuarioReqData, resultado) => {
+  dbConn.query('UPDATE usuarios SET nome = ?, telefone = ?, status = ?, tipo = ? WHERE idusuarios = ?', [usuarioReqData.nome, usuarioReqData.telefone, usuarioReqData.status, usuarioReqData.tipo, id], (err, res) => {
+    if(err) {
+      console.log('Erro ao alterar usuario', err);
+      resultado(null, err);
+    } else {
+      resultado(null, res);
+    }
+  })
+}
+
+//delete usuario
+usuario.deleteUsuario = (id, resultado) => {
+  dbConn.query('DELETE FROM usuarios WHERE idusuarios = ?', [id], (err, res) => {
+    if(err) {
+      console.log('Erro ao deletar usuario!');
+      resultado(null, err);
+    } else {
+      console.log('Usuario deletado com sucesso!');
       resultado(null, res);
     }
   })

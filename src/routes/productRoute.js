@@ -10,6 +10,11 @@ router.get('/', productController.getProd);
 router.get('/:id', productController.getProdById);
 
 //create produto
-router.post('/', productController.createProd)
+router.post('/', productController.createProd);
+
+//edita usuario
+router.put('/:id', productController.editProd);
+
+router.delete('/:id', productController.deleteProd);
 
 module.exports = router;
