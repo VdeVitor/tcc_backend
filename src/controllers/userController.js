@@ -1,9 +1,9 @@
+const session = require('express-session');
 const usuarioModel = require('../models/usuarioModel');
 
 module.exports = {
     getUser(req,res){
         usuarioModel.getAllUsuarios((err, usuarios) => {
-            console.log('Cheguei');
             if(err){
                 res.send(err);
             } else {
@@ -56,5 +56,6 @@ module.exports = {
                 res.send(err);
                 res.json({success: true, message: 'Usuario deletado com sucesso!'})
         })
-    }
+    },
+
 }

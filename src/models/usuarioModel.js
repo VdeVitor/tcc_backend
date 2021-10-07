@@ -1,10 +1,15 @@
 const dbConn = require('../../config/db.config');
+const bcrypt = require('bcrypt');
+const session = require('express-session');
+const saltRounds = 10;
 
 const usuario = function(usu){
   this.nome = usu.nome;
   this.telefone = usu.telefone;
   this.status = usu.status ? usu.status : 1;
   this.tipo = usu.tipo;
+  this.login = usu.login;
+  this.senha = usu.senha;
 }
 
 //get all usuarios
@@ -34,7 +39,8 @@ usuario.getUsuarioById = (id, resultado) => {
 
 //post create usuario
 usuario.createUsuario = (usuarioReqData, resultado) => {
-  dbConn.query('INSERT INTO usuarios SET ?', usuarioReqData, (err, res) => {
+  bcrypt.hash(usuarioReqData.senha, saltRounds, (err, hash) => {
+  dbConn.query('INSERT INTO usuarios SET nome = ?, telefone = ?, status = ?, tipo = ?, login = ?, senha = ?', [usuarioReqData.nome, usuarioReqData.telefone, usuarioReqData.status, usuarioReqData.tipo, usuarioReqData.login, hash], (err, res) => {
     if(err) {
       console.log('Erro ao criar usuário!', err);
       resultado(null, err);
@@ -42,11 +48,12 @@ usuario.createUsuario = (usuarioReqData, resultado) => {
       resultado(null, res);
     }
   })
+})
 }
 
 //post altera usuario
 usuario.editUsuario = (id, usuarioReqData, resultado) => {
-  dbConn.query('UPDATE usuarios SET nome = ?, telefone = ?, status = ?, tipo = ? WHERE idusuarios = ?', [usuarioReqData.nome, usuarioReqData.telefone, usuarioReqData.status, usuarioReqData.tipo, id], (err, res) => {
+  dbConn.query('UPDATE usuarios SET nome = ?, telefone = ?, status = ?, tipo = ?, login = ?, senha = ? WHERE idusuarios = ?', [usuarioReqData.nome, usuarioReqData.telefone, usuarioReqData.status, usuarioReqData.tipo, usuarioReqData.login, usuarioReqData.senha, id], (err, res) => {
     if(err) {
       console.log('Erro ao alterar usuario', err);
       resultado(null, err);
