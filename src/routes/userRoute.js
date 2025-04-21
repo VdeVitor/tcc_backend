@@ -1,63 +1,90 @@
 const express = require('express');
-const dbConn = require('../../config/db.config');
-const bcrypt = require('bcrypt');
-const session = require('express-session');
-const saltRounds = 10;
 const router = express.Router();
+const User = require('../models/usuarioModel');
 
-const userController = require('../controllers/userController');
-
-//get all usuarios
-router.get('/', userController.getUser);
-
-//get usuario by id
-router.get('/:id', userController.getUserById);
-
-//create novo usuario
-router.post('/cadastro', userController.createUser)
-
-//altera usuario
-router.put('/:id', userController.editUser)
-
-//deleta usuario
-router.delete('/:id', userController.deleteUser)
-
-router.get("/session", (req, res) => {
-  if (req.session.user) {
-    res.send({ loggedIn: true, user: req.session.user });
-  } else {
-    res.send({ loggedIn: false });
-  }
+// Get all users
+router.get('/', async (req, res) => {
+    try {
+        const users = await User.find();
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 });
 
-router.post("/login", (req, res) => {
-  const login = req.body.login;
-  const senha = req.body.senha;
-
-  dbConn.query(
-    'SELECT * FROM usuarios WHERE login = ?;',
-    [login],
-    (err, result) => {
-      if (err) {
-        res.send({ err: err });
-      }
-      console.log(result);
-
-      if (result.length > 0) {
-        bcrypt.compare(senha, result[0].senha, (error, response) => {
-          if (response) {
-            req.session.user = result;
-            console.log(req.session.user);
-            res.send(result);
-          } else {
-            res.send({ message: "Login ou senha incorreto!" });
-          }
-        });
-      } else {
-        res.send({ message: "Usuário não existe" });
-      }
+// Get user by ID
+router.get('/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
-  );
+});
+
+// Create new user
+router.post('/', async (req, res) => {
+    try {
+        const user = new User(req.body);
+        const newUser = await user.save();
+        res.status(201).json(newUser);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+// Update user
+router.put('/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        Object.assign(user, req.body);
+        const updatedUser = await user.save();
+        res.json(updatedUser);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+// Delete user
+router.delete('/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        await user.remove();
+        res.json({ message: 'User deleted' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Login route
+router.post('/login', async (req, res) => {
+    try {
+        const { email, senha } = req.body;
+        const user = await User.findOne({ email });
+        
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        const isMatch = await user.comparePassword(senha);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        req.session.userId = user._id;
+        res.json({ message: 'Login successful' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 });
 
 module.exports = router;

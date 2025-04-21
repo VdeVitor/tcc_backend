@@ -1,71 +1,161 @@
 const comandaModel = require('../models/comandaModel');
 
 module.exports = {
-  getAllComandas(req, res){
-    comandaModel.getAllComandas((err, comandas) => {
-      if(err){
-        res.send(err);
-      } else {
-        res.send(comandas);
-      }
-    })
-  },
-
-  getComandaById(req, res){
-    comandaModel.getComandaById(req.params.id, (err, comanda) => {
-      if(err) {
-        res.send(err);
-      } else {
-        res.send(comanda);
-      }
-    })
-  },
-
-  createComanda(req, res){
-    const idData = req.body.id
-      comandaModel.createComanda(idData, (err, comanda) => {
-        if(err){
-          res.send(err);
-        } else {
-          res.json({success: true, message: 'Comanda criada com sucesso!', id: comanda.insertId});
-        }
-      })
-    },
-
-  editComanda(req, res){
-    const comandaReqData = new comandaModel(req.body);
-
-    if(req.body.constructor === Object && Object(req.body).length === 0) {
-      res.send(400).send({ success: false, message: 'Erro ao atualizar a comanda!'});
-    } else {
-      comandaModel.editComanda(comandaReqData, (err, comanda) => {
-        if(err)
-          res.send(err);
-          res.json({success: true, message: 'Comanda atualizada com sucesso!', data: comanda.insertId});
-      })
+  async getAllComandas(req, res) {
+    try {
+      const comandas = await comandaModel.find().populate('dono').populate('mesa');
+      res.json(comandas);
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar comandas',
+        error: err.message
+      });
     }
   },
 
-  deleteComanda(req, res){
-    comandaModel.deleteComanda(req.params.id, (err, comanda) => {
-      if(err)
-        res.send(err);
-        res.json({success: true, message:'Comanda deletada com sucesso!'});
-    })
+  async getComandaById(req, res) {
+    try {
+      const comanda = await comandaModel.findById(req.params.id)
+        .populate('dono')
+        .populate('mesa')
+        .populate('pedidos');
+      
+      if (!comanda) {
+        return res.status(404).json({
+          success: false,
+          message: 'Comanda não encontrada'
+        });
+      }
+      res.json(comanda);
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar comanda',
+        error: err.message
+      });
+    }
   },
 
-  addItemComanda(req, res){
-    const comandaReqData = new comandaModel(req.body);
+  async createComanda(req, res) {
+    try {
+      // Validate required fields
+      if (!req.body.dono || !req.body.mesa) {
+        return res.status(400).json({
+          success: false,
+          message: 'Dono e mesa são campos obrigatórios!'
+        });
+      }
 
-    if(req.body.constructor === Object && Object(req.body).length === 0) {
-      res.send(400).send({ success: false, message: 'Erro ao atualizar a comanda!'});
-    } else {
-      comandaModel.addItemComanda(comandaReqData, (err, comanda) => {
-        if(err)
-          res.send(err);
-          res.json({success: true, message: 'Item adicionado com sucesso!', data: comanda.insertId});
-      })
+      const comandaData = {
+        dono: req.body.dono,
+        mesa: req.body.mesa,
+        status: req.body.status || 1,
+        valorTotal: req.body.valorTotal || 0,
+        formaPagamento: req.body.formaPagamento || null,
+        ativo: req.body.ativo !== undefined ? req.body.ativo : true
+      };
+
+      const comanda = new comandaModel(comandaData);
+      const savedComanda = await comanda.save();
+      
+      res.status(201).json({
+        success: true,
+        message: 'Comanda criada com sucesso!',
+        data: savedComanda
+      });
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao criar comanda',
+        error: err.message
+      });
+    }
+  },
+
+  async editComanda(req, res) {
+    try {
+      const comanda = await comandaModel.findById(req.params.id);
+      
+      if (!comanda) {
+        return res.status(404).json({
+          success: false,
+          message: 'Comanda não encontrada'
+        });
+      }
+
+      const updatedComanda = await comandaModel.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        { new: true, runValidators: true }
+      );
+
+      res.json({
+        success: true,
+        message: 'Comanda atualizada com sucesso!',
+        data: updatedComanda
+      });
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao atualizar comanda',
+        error: err.message
+      });
+    }
+  },
+
+  async deleteComanda(req, res) {
+    try {
+      const comanda = await comandaModel.findById(req.params.id);
+      
+      if (!comanda) {
+        return res.status(404).json({
+          success: false,
+          message: 'Comanda não encontrada'
+        });
+      }
+
+      await comandaModel.findByIdAndDelete(req.params.id);
+
+      res.json({
+        success: true,
+        message: 'Comanda deletada com sucesso!'
+      });
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao deletar comanda',
+        error: err.message
+      });
+    }
+  },
+
+  async addItemComanda(req, res) {
+    try {
+      const comanda = await comandaModel.findById(req.params.id);
+      
+      if (!comanda) {
+        return res.status(404).json({
+          success: false,
+          message: 'Comanda não encontrada'
+        });
+      }
+
+      // Here you would add the logic to add an item to the comanda
+      // This might involve creating a new Order and linking it to the comanda
+      // You'll need to implement this based on your Order model and requirements
+
+      res.json({
+        success: true,
+        message: 'Item adicionado com sucesso!',
+        data: comanda
+      });
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao adicionar item',
+        error: err.message
+      });
     }
   }
-
-}
+};

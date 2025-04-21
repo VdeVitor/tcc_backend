@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
+const connectDB = require('./config/database');
 
 const usuRouter = require('../src/routes/userRoute')
 const prodRouter = require('../src/routes/productRoute')
@@ -13,6 +14,9 @@ const pedidoRouter = require('../src/routes/pedidosRoute')
 
 //iniciando o projeto pelo express.
 const app = express();
+
+// Connect to MongoDB
+connectDB();
 
 //conversão do json para objeto entendível para a aplicação.
 app.use(cors({

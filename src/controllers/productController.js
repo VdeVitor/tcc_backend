@@ -1,60 +1,68 @@
-const produtoModel = require('../models/produtoModel');
+const Product = require('../models/produtoModel');
 
 module.exports = {
-    getProd(req,res){
-      produtoModel.getAllProdutos((err, produtos) => {
-            if(err){
-                res.send(err);
-            } else {
-                res.send(produtos);
-            }
-        })
-    },
-
-    getProdById(req, res){
-      produtoModel.getProdById(req.params.id, (err, produto) => {
-            if(err){
-                res.send(err);
-            } else {
-                res.send(produto);
-            }
-        })
-    },
-
-    createProd(req, res) {
-        const produtoReqData = new produtoModel(req.body);
-
-        if(req.body.constructor === Object && Object(req.body).length === 0) {
-            res.send(400).send({success: false, message: 'Favor preencher todos os campos!'});
-        } else {
-            produtoModel.createProd(produtoReqData, (err, produto) => {
-                if(err)
-                    res.send(err);
-                    res.json({status: true, message: 'Produto criado com sucesso!', data: produto.insertId})
-            })
+    async getProd(req, res) {
+        try {
+            const products = await Product.find();
+            res.json(products);
+        } catch (error) {
+            res.status(500).json({ message: error.message });
         }
     },
 
-    editProd(req, res){
-        const produtoReqData = new produtoModel(req.body);
-
-        if(req.body.constructor === Object && Object(req.body).length === 0) {
-            res.send(400).send({success: false, message: 'Favor preencher todos os campos!'});
-        } else {
-            produtoModel.editProd(req.params.id, produtoReqData, (err, produto) => {
-                if(err)
-                    res.send(err);
-                    res.json({status: true, message: 'Produto alterado com sucesso!', data: produto.insertId})
-            })
+    async getProdById(req, res) {
+        try {
+            const product = await Product.findById(req.params.id);
+            if (!product) {
+                return res.status(404).json({ message: 'Product not found' });
+            }
+            res.json(product);
+        } catch (error) {
+            res.status(500).json({ message: error.message });
         }
     },
 
-    deleteProd(req, res) {
-        produtoModel.deleteProd(req.params.id, (err, produto) => {
-            if(err)
-            res.send(err);
-            res.json({status: true, message: 'Produto deletado com sucesso'})
-        })
+    async createProd(req, res) {
+        try {
+            if (!req.body || Object.keys(req.body).length === 0) {
+                return res.status(400).json({ success: false, message: 'Please fill all required fields!' });
+            }
+            const product = new Product(req.body);
+            const newProduct = await product.save();
+            res.status(201).json({ success: true, message: 'Product created successfully!', data: newProduct });
+        } catch (error) {
+            res.status(400).json({ success: false, message: error.message });
+        }
+    },
+
+    async editProd(req, res) {
+        try {
+            if (!req.body || Object.keys(req.body).length === 0) {
+                return res.status(400).json({ success: false, message: 'Please fill all required fields!' });
+            }
+            const product = await Product.findByIdAndUpdate(
+                req.params.id,
+                req.body,
+                { new: true, runValidators: true }
+            );
+            if (!product) {
+                return res.status(404).json({ success: false, message: 'Product not found' });
+            }
+            res.json({ success: true, message: 'Product updated successfully!', data: product });
+        } catch (error) {
+            res.status(400).json({ success: false, message: error.message });
+        }
+    },
+
+    async deleteProd(req, res) {
+        try {
+            const product = await Product.findByIdAndDelete(req.params.id);
+            if (!product) {
+                return res.status(404).json({ success: false, message: 'Product not found' });
+            }
+            res.json({ success: true, message: 'Product deleted successfully' });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
     }
-
-}
+};

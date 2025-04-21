@@ -1,33 +1,28 @@
-const dbConn = require('../../config/db.config');
+const mongoose = require('mongoose');
 
-const mesa = (mesa) => {
-  this.numero = mesa.numero;
-  this.status = mesa.status ? mesa.status : 0;
-}
-
-//get all mesas
-mesa.getAllMesas = (resultado) => {
-  dbConn.query('SELECT * FROM mesa', (err, res) => {
-    if(err){
-      console.log('Erro ao buscar mesas', err);
-      resultado(null, err);
-    } else {
-      console.log('Mesas encontradas com sucesso');
-      resultado(null, res);
+const tableSchema = new mongoose.Schema({
+    numero: {
+        type: Number,
+        required: true,
+        unique: true
+    },
+    status: {
+        type: Number,
+        default: 0,
+        enum: [0, 1, 2] // 0: livre, 1: ocupada, 2: reservada
+    },
+    capacidade: {
+        type: Number,
+        required: true
+    },
+    ativo: {
+        type: Boolean,
+        default: true
     }
-  })
-}
+}, {
+    timestamps: true
+});
 
-//get mesa by id
-mesa.getMesaById = (id, resultado) => {
-  dbConn.query('SELECT * FROM mesa WHERE idmesa=?', id, (err, res) => {
-    if(err) {
-      console.log('Erro ao buscar mesa de id referente', err);
-      resultado(null, err);
-    } else {
-      resultado(null, res);
-    }
-  })
-}
+const Table = mongoose.model('Table', tableSchema);
 
-module.exports = mesa;
+module.exports = Table;

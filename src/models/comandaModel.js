@@ -1,77 +1,53 @@
-const dbConn = require('../../config/db.config');
+const mongoose = require('mongoose');
 
-const comanda = function(comanda){
-  this.status = comanda.status;
-  this.dono_id = comanda.dono_id;
-  this.mesa_id = comanda.mesa_id;
-}
-
-comanda.getAllComandas = (resultado) => {
-  dbConn.query('SELECT * FROM comanda', (err, res) => {
-    if(err){
-      console.log('Erro ao buscar comandas!', err);
-      resultado(null, err);
-    } else {
-      console.log('Comandas encontradas com sucesso!');
-      resultado(null, res);
+const billSchema = new mongoose.Schema({
+    status: {
+        type: Number,
+        default: 1,
+        enum: [0, 1, 2] // 0: fechada, 1: aberta, 2: cancelada
+    },
+    dono: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    mesa: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Table',
+        required: true
+    },
+    valorTotal: {
+        type: Number,
+        default: 0
+    },
+    formaPagamento: {
+        type: String,
+        enum: ['dinheiro', 'cartao_credito', 'cartao_debito', 'pix', null],
+        default: null
+    },
+    ativo: {
+        type: Boolean,
+        default: true
     }
-  })
-}
+}, {
+    timestamps: true
+});
 
-comanda.getComandaById = (id, resultado) => {
-  dbConn.query('SELECT * FROM comanda WHERE idcomanda=?',id , (err, res) => {
-    if(err){
-      console.log('Erro ao buscar comanda com id!', id);
-      resultado(null, err);
-    } else {
-      console.log('Comanda encontrada com sucesso!');
-      resultado(null, res);
-    }
-  })
-}
+// Virtual populate orders
+billSchema.virtual('pedidos', {
+    ref: 'Order',
+    localField: '_id',
+    foreignField: 'comanda'
+});
 
-comanda.editComanda = (id, comandaReqData, resultado) => {
-  dbConn.query('UPDATE comanda SET dono_id = ? WHERE idcomanda = ?', [comandaReqData.dono_id, id], (err, res) => {
-    if(err) {
-      console.log('Erro ao alterar produto', err);
-      resultado(null, err);
-    } else {
-      resultado(null, res);
-    }
-  })
-}
+// Method to calculate total value
+billSchema.methods.calcularTotal = async function() {
+    const Order = mongoose.model('Order');
+    const orders = await Order.find({ comanda: this._id });
+    this.valorTotal = orders.reduce((total, order) => total + (order.valor * order.quantidade), 0);
+    await this.save();
+};
 
-comanda.createComanda = (id, resultado) => {
-  dbConn.query(`INSERT INTO comanda (status, dono_id)
-                VALUES(
-                (1),
-                (SELECT idusuarios AS dono_id FROM usuarios WHERE idusuarios = ?)
-                );`, id, (err, res) => {
-                  if(err){
-                    console.log('Erro ao criar comanda!');
-                    console.log(err);
-                    resultado(null, err);
-                  } else {
-                    console.log('Comanda criada com sucesso!');
-                    resultado(null, res);
-                  }
-                })
-}
+const Bill = mongoose.model('Bill', billSchema);
 
-comanda.deleteComanda = (id, resultado) => {
-  dbConn.query("DELETE FROM comanda WHERE idcomanda = ?", [id], (err, res) => {
-    if(err) {
-      console.log('Erro ao deletar comanda', err);
-      resultado(null, err);
-    } else {
-      console.log('Comanda deletada com sucesso');
-      resultado(null, res);
-    }
-  })
-}
-
-/* comanda.addItemComanda = (id, comandaReqData, resultado) => {
-  dbConn.query("INSERT INTO comanda WHERE ")
-} */
-
-module.exports = comanda;
+module.exports = Bill;
