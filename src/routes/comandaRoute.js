@@ -9,14 +9,17 @@ router.get('/', comandaController.getAllComandas);
 //get comandas by owner
 router.get('/dono/:clerkId', comandaController.getComandasByDono);
 
+//get comandas by table number
+router.get('/mesa/:numero', comandaController.getComandaByTable);
+
 //get comandas by id
 router.get('/:id', comandaController.getComandaById);
 
 //create comanda
 router.post('/', comandaController.createComanda);
 
-//edita usuario
-router.put('/:id', comandaController.editComanda);
+//edita comanda
+router.put('/:clerkId', comandaController.editComanda);
 
 router.delete('/:id', comandaController.deleteComanda);
 

@@ -100,7 +100,9 @@ module.exports = {
 
   async editComanda(req, res) {
     try {
-      const comanda = await comandaModel.findById(req.params.id);
+      const comanda = await comandaModel.findOne({ 
+        dono: req.params.clerkId
+      });
       
       if (!comanda) {
         return res.status(404).json({
@@ -109,9 +111,21 @@ module.exports = {
         });
       }
 
-      const updatedComanda = await comandaModel.findByIdAndUpdate(
-        req.params.id,
-        req.body,
+      // Atualiza apenas os campos permitidos
+      const updateData = {
+        status: req.body.status,
+        formaPagamento: req.body.formaPagamento,
+        valorTotal: req.body.valorTotal
+      };
+
+      // Se o status for 0 (fechada), marca como inativa
+      if (req.body.status === 0) {
+        updateData.ativo = false;
+      }
+
+      const updatedComanda = await comandaModel.findOneAndUpdate(
+        { _id: comanda._id },
+        updateData,
         { new: true, runValidators: true }
       );
 
@@ -245,6 +259,42 @@ module.exports = {
       res.status(500).json({
         success: false,
         message: 'Erro ao buscar comandas do usuário',
+        error: err.message
+      });
+    }
+  },
+
+  async getComandaByTable(req, res) {
+    try {
+      const comandas = await comandaModel.find({ 
+        mesa: req.params.numero,
+        ativo: true,
+        status: 1
+      })
+      .populate({
+        path: 'dono',
+        select: 'clerkId nome email tipo'
+      })
+      .populate({
+        path: 'produtos.produto',
+        select: 'nome descricao categoria valor'
+      });
+      
+      if (!comandas || comandas.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Nenhuma comanda ativa encontrada para esta mesa'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: comandas
+      });
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar comandas da mesa',
         error: err.message
       });
     }

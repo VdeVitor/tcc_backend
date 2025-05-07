@@ -7,7 +7,7 @@ const tableController = require('../controllers/tableController');
 router.get('/', tableController.getMesas);
 
 //get mesa by numero
-router.get('/numero/:numero', tableController.getMesaById);
+router.get('/numero/:numero', tableController.getMesaByNumero);
 
 //update mesa status
 router.put('/:numero/status', tableController.updateMesaStatus);

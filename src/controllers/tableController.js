@@ -14,9 +14,9 @@ module.exports = {
     }
   },
 
-  async getMesaById(req, res) {
+  async getMesaByNumero(req, res) {
     try {
-      const mesa = await mesaModel.findOne({ numero: req.params.id });
+      const mesa = await mesaModel.findOne({ numero: req.params.numero });
       if (!mesa) {
         return res.status(404).json({
           success: false,
