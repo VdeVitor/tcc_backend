@@ -6,19 +6,22 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    clerkId: {
+        type: String,
+        required: true
+    },
     email: {
         type: String,
         required: true,
         unique: true
     },
     senha: {
-        type: String,
-        required: true
+        type: String
     },
     tipo: {
         type: String,
-        enum: ['admin', 'garcom', 'cozinheiro'],
-        default: 'garcom'
+        enum: ['admin', 'garcom', 'cozinheiro', 'cliente'],
+        default: 'cliente'
     },
     ativo: {
         type: Boolean,

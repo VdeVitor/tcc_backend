@@ -30,6 +30,7 @@ const seedDatabase = async () => {
             email: 'admin@easybar.com',
             senha: 'admin123',
             tipo: 'admin',
+            clerkId: 'user_2admin123',
             ativo: true
         });
         console.log('Created admin user');
@@ -40,6 +41,7 @@ const seedDatabase = async () => {
             email: 'garcom@easybar.com',
             senha: 'garcom123',
             tipo: 'garcom',
+            clerkId: 'user_2garcom123',
             ativo: true
         });
         console.log('Created waiter user');
@@ -50,6 +52,7 @@ const seedDatabase = async () => {
             email: 'cozinheiro@easybar.com',
             senha: 'cozinheiro123',
             tipo: 'cozinheiro',
+            clerkId: 'user_2chef123',
             ativo: true
         });
         console.log('Created chef user');
@@ -280,27 +283,35 @@ const seedDatabase = async () => {
         // Create a sample bill
         const bill = await Bill.create({
             status: 1,
-            dono: waiterUser._id,
-            mesa: tables[0]._id,
+            dono: waiterUser.clerkId,
+            mesa: 1, // Using table number instead of _id
             valorTotal: 0,
             formaPagamento: null,
-            ativo: true
+            ativo: true,
+            produtos: [] // Initialize empty produtos array
         });
         console.log('Created sample bill');
 
-        // Create a sample order
-        await Order.create({
-            status: 0,
-            valor: products[0].valor,
+        // Add sample products to the bill
+        bill.produtos.push({
+            produto: products[0]._id, // Heineken
             quantidade: 2,
-            produto: products[0]._id,
-            comanda: bill._id,
-            observacoes: 'Sem gelo'
+            valor: products[0].valor,
+            observacoes: 'Sem gelo',
+            status: 'pendente'
         });
-        console.log('Created sample order');
+
+        bill.produtos.push({
+            produto: products[5]._id, // Jack Daniel's
+            quantidade: 1,
+            valor: products[5].valor,
+            observacoes: 'Com gelo',
+            status: 'pendente'
+        });
 
         // Calculate bill total
         await bill.calcularTotal();
+        await bill.save();
         console.log('Calculated bill total');
 
         console.log('Seed completed successfully!');

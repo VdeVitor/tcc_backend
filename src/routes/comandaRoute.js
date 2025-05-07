@@ -3,13 +3,16 @@ const router = express.Router();
 
 const comandaController = require('../controllers/comandaController')
 
-//get all produtos
+//get all comandas
 router.get('/', comandaController.getAllComandas);
 
-//get produto by id
+//get comandas by owner
+router.get('/dono/:clerkId', comandaController.getComandasByDono);
+
+//get comandas by id
 router.get('/:id', comandaController.getComandaById);
 
-//create produto
+//create comanda
 router.post('/', comandaController.createComanda);
 
 //edita usuario
@@ -17,6 +20,7 @@ router.put('/:id', comandaController.editComanda);
 
 router.delete('/:id', comandaController.deleteComanda);
 
-router.put('/:id', comandaController.addItemComanda);
+//add item to comanda
+router.post('/dono/:clerkId/items', comandaController.addItemComanda);
 
 module.exports = router;

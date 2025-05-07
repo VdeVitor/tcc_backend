@@ -13,9 +13,9 @@ router.get('/', async (req, res) => {
 });
 
 // Get user by ID
-router.get('/:id', async (req, res) => {
+router.get('/:clerkId', async (req, res) => {
     try {
-        const user = await User.findById(req.params.id);
+        const user = await User.findOne({ clerkId: req.params.clerkId });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -37,9 +37,9 @@ router.post('/', async (req, res) => {
 });
 
 // Update user
-router.put('/:id', async (req, res) => {
+router.put('/:clerkId', async (req, res) => {
     try {
-        const user = await User.findById(req.params.id);
+        const user = await User.findOne({ clerkId: req.params.clerkId });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -52,9 +52,9 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete user
-router.delete('/:id', async (req, res) => {
+router.delete('/:clerkId', async (req, res) => {
     try {
-        const user = await User.findById(req.params.id);
+        const user = await User.findOne({ clerkId: req.params.clerkId });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -80,7 +80,7 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        req.session.userId = user._id;
+        req.session.clerkId = user.clerkId;
         res.json({ message: 'Login successful' });
     } catch (error) {
         res.status(500).json({ message: error.message });

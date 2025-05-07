@@ -6,7 +6,10 @@ const tableController = require('../controllers/tableController');
 //get all mesas
 router.get('/', tableController.getMesas);
 
-//get mesa by id
-router.get('/:id', tableController.getMesaById);
+//get mesa by numero
+router.get('/numero/:numero', tableController.getMesaById);
+
+//update mesa status
+router.put('/:numero/status', tableController.updateMesaStatus);
 
 module.exports = router;

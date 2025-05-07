@@ -7,15 +7,37 @@ const billSchema = new mongoose.Schema({
         enum: [0, 1, 2] // 0: fechada, 1: aberta, 2: cancelada
     },
     dono: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        type: String,
         required: true
     },
     mesa: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Table',
+        type: Number,
         required: true
     },
+    produtos: [{
+        produto: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Product',
+            required: true
+        },
+        quantidade: {
+            type: Number,
+            required: true,
+            min: 1
+        },
+        valor: {
+            type: Number,
+            required: true
+        },
+        observacoes: {
+            type: String
+        },
+        status: {
+            type: String,
+            enum: ['pendente', 'preparando', 'pronto', 'entregue'],
+            default: 'pendente'
+        }
+    }],
     valorTotal: {
         type: Number,
         default: 0
@@ -42,9 +64,9 @@ billSchema.virtual('pedidos', {
 
 // Method to calculate total value
 billSchema.methods.calcularTotal = async function() {
-    const Order = mongoose.model('Order');
-    const orders = await Order.find({ comanda: this._id });
-    this.valorTotal = orders.reduce((total, order) => total + (order.valor * order.quantidade), 0);
+    this.valorTotal = this.produtos.reduce((total, item) => {
+        return total + (item.valor * item.quantidade);
+    }, 0);
     await this.save();
 };
 

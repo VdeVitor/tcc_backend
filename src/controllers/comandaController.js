@@ -1,9 +1,20 @@
 const comandaModel = require('../models/comandaModel');
+const Table = require('../models/mesaModel');
+const Product = require('../models/produtoModel');
+const User = require('../models/usuarioModel');
 
 module.exports = {
   async getAllComandas(req, res) {
     try {
-      const comandas = await comandaModel.find().populate('dono').populate('mesa');
+      const comandas = await comandaModel.find()
+        .populate({
+          path: 'dono',
+          select: 'clerkId nome email tipo'
+        })
+        .populate({
+          path: 'produtos.produto',
+          select: 'nome descricao categoria valor'
+        });
       res.json(comandas);
     } catch (err) {
       res.status(500).json({
@@ -17,9 +28,14 @@ module.exports = {
   async getComandaById(req, res) {
     try {
       const comanda = await comandaModel.findById(req.params.id)
-        .populate('dono')
-        .populate('mesa')
-        .populate('pedidos');
+        .populate({
+          path: 'dono',
+          select: 'clerkId nome email tipo'
+        })
+        .populate({
+          path: 'produtos.produto',
+          select: 'nome descricao categoria valor'
+        });
       
       if (!comanda) {
         return res.status(404).json({
@@ -44,6 +60,15 @@ module.exports = {
         return res.status(400).json({
           success: false,
           message: 'Dono e mesa são campos obrigatórios!'
+        });
+      }
+
+      // Find table by number
+      const table = await Table.findOne({ numero: req.body.mesa });
+      if (!table) {
+        return res.status(404).json({
+          success: false,
+          message: 'Mesa não encontrada!'
         });
       }
 
@@ -132,28 +157,94 @@ module.exports = {
 
   async addItemComanda(req, res) {
     try {
-      const comanda = await comandaModel.findById(req.params.id);
+      // Find comanda by clerkId
+      const comanda = await comandaModel.findOne({ 
+        dono: req.params.clerkId,
+        status: 1 // Only add items to open bills
+      });
       
       if (!comanda) {
         return res.status(404).json({
           success: false,
-          message: 'Comanda não encontrada'
+          message: 'Comanda não encontrada ou não está aberta'
         });
       }
 
-      // Here you would add the logic to add an item to the comanda
-      // This might involve creating a new Order and linking it to the comanda
-      // You'll need to implement this based on your Order model and requirements
+      // Validate required fields
+      if (!req.body.produto || !req.body.quantidade) {
+        return res.status(400).json({
+          success: false,
+          message: 'Produto e quantidade são obrigatórios'
+        });
+      }
+
+      // Find product
+      const produto = await Product.findById(req.body.produto);
+      if (!produto) {
+        return res.status(404).json({
+          success: false,
+          message: 'Produto não encontrado'
+        });
+      }
+
+      // Add product to bill
+      comanda.produtos.push({
+        produto: produto._id,
+        quantidade: req.body.quantidade,
+        valor: produto.valor,
+        observacoes: req.body.observacoes || '',
+        status: 'pendente'
+      });
+
+      // Calculate new total
+      await comanda.calcularTotal();
+      await comanda.save();
+
+      // Populate the updated comanda
+      const updatedComanda = await comandaModel.findOne({ _id: comanda._id })
+        .populate({
+          path: 'produtos.produto',
+          select: 'nome descricao categoria valor'
+        });
 
       res.json({
         success: true,
         message: 'Item adicionado com sucesso!',
-        data: comanda
+        data: updatedComanda
       });
     } catch (err) {
       res.status(500).json({
         success: false,
         message: 'Erro ao adicionar item',
+        error: err.message
+      });
+    }
+  },
+
+  async getComandasByDono(req, res) {
+    try {
+      // Find comandas using the clerkId directly
+      const comandas = await comandaModel.find({ dono: req.params.clerkId })
+        .populate({
+          path: 'produtos.produto',
+          select: 'nome descricao categoria valor'
+        });
+      
+      if (!comandas || comandas.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Nenhuma comanda encontrada para este usuário'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: comandas
+      });
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao buscar comandas do usuário',
         error: err.message
       });
     }
