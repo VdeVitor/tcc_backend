@@ -87,4 +87,25 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// Update user type
+router.patch('/:clerkId/tipo', async (req, res) => {
+    try {
+        const { tipo } = req.body;
+        if (!tipo || !['admin', 'garcom', 'cozinheiro', 'cliente'].includes(tipo)) {
+            return res.status(400).json({ message: 'Invalid user type' });
+        }
+
+        const user = await User.findOne({ clerkId: req.params.clerkId });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        user.tipo = tipo;
+        const updatedUser = await user.save();
+        res.json(updatedUser);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
 module.exports = router;

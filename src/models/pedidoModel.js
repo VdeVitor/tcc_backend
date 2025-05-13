@@ -25,6 +25,10 @@ const orderSchema = new mongoose.Schema({
         ref: 'Bill',
         required: true
     },
+    dono: {
+        type: String,  // Armazenará o clerkId
+        required: true
+    },
     observacoes: {
         type: String,
         default: ''
