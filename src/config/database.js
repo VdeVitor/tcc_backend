@@ -3,9 +3,12 @@ require('dotenv').config();
 
 const connectDB = async () => {
     try {
-        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/easybar', {
+        await mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://vitorvasconceloscontacto:Ip2gywFPOYeAKvNl@easybar.tjbtfv5.mongodb.net/', {
             useNewUrlParser: true,
-            useUnifiedTopology: true
+            useUnifiedTopology: true,
+            maxPoolSize: 10,
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
         });
         console.log('MongoDB connected successfully');
     } catch (error) {
